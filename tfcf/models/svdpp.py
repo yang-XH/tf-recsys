@@ -21,6 +21,7 @@ def _convert_to_sparse_format(x):
     Returns:
         A dictionary that contains three fields, which are 
             indices, values, and the dense shape of sparse matrix.
+        sparse tensor的形式 e.g. SparseTensor(indices=[[0, 0], [1, 2]], values=[1, 2], dense_shape=[3, 4])
     """
 
     sparse = {
@@ -30,6 +31,12 @@ def _convert_to_sparse_format(x):
 
     for row, x_i in enumerate(x):
         for col, x_ij in enumerate(x_i):
+            "
+            用于 tf.nn.embedding_lookup_sparse，
+            embedding_lookup_sparse，是找到对应特征的embedding后，再将其相加，
+            因此用作key的 sparse tensor不需要 col 信息，只需保证每行中的数字，是需要embedding_lookup再相加的特征的key即可
+            因此下述 sparse 的col信息并不对应 item 的原本的ID信息，而是0，1，2...
+            "
             sparse['indices'].append((row, col))
             sparse['values'].append(x_ij)
 
@@ -44,7 +51,7 @@ def _get_implicit_feedback(x, num_users, num_items, dual):
     """Gets implicit feedback from (users, items) pair.
 
     Args:
-        x: A numpy array of shape `(samples, 2)`.
+        x: A numpy array of shape `(samples, 2)`. columns = [userID, itemID]
         num_users: An integer, total number of users.
         num_items: An integer, total number of items.
         dual: A bool, deciding whether returns the
